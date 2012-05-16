@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<Fieldml version="0.5.0" xsi:noNamespaceSchemaLocation="http://www.fieldml.org/resources/xml/0.5/FieldML_0.5.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <Region name="cellmlsplitreacdiff_simplex">
+  <Import xlink:href="http://www.fieldml.org/resources/xml/0.5/FieldML_Library_0.5.xml" region="library">
+   <ImportType localName="real.1d" remoteName="real.1d"/>
+   <ImportType localName="localNodes.3d.tetrahedron4" remoteName="localNodes.3d.tetrahedron4"/>
+   <ImportEvaluator localName="localNodes.3d.tetrahedron4.argument" remoteName="localNodes.3d.tetrahedron4.argument"/>
+   <ImportEvaluator localName="interpolator.3d.unit.trilinearSimplex" remoteName="interpolator.3d.unit.trilinearSimplex"/>
+   <ImportType localName="parameters.3d.unit.trilinearSimplex" remoteName="parameters.3d.unit.trilinearSimplex"/>
+   <ImportType localName="chart.3d" remoteName="chart.3d"/>
+   <ImportEvaluator localName="chart.3d.argument" remoteName="chart.3d.argument"/>
+   <ImportEvaluator localName="parameters.3d.unit.trilinearSimplex.argument" remoteName="parameters.3d.unit.trilinearSimplex.argument"/>
+   <ImportEvaluator localName="shape.unit.cube" remoteName="shape.unit.cube"/>
+   <ImportType localName="coordinates.rc.3d" remoteName="coordinates.rc.3d"/>
+   <ImportType localName="coordinates.rc.3d.component" remoteName="coordinates.rc.3d.component"/>
+   <ImportEvaluator localName="coordinates.rc.3d.component.argument" remoteName="coordinates.rc.3d.component.argument"/>
+  </Import>
+  <EnsembleType name="cellmlsplitreacdiff_simplex.nodes">
+   <Members>
+    <MemberRange min="1" max="175"/>
+   </Members>
+  </EnsembleType>
+  <ArgumentEvaluator name="cellmlsplitreacdiff_simplex.nodes.argument" valueType="cellmlsplitreacdiff_simplex.nodes"/>
+  <MeshType name="cellmlsplitreacdiff_simplex.mesh">
+   <Elements name="element">
+    <Members>
+     <MemberRange min="1" max="576"/>
+    </Members>
+   </Elements>
+   <Chart name="xi">
+    <Components name="cellmlsplitreacdiff_simplex.mesh.xi.component" count="3"/>
+   </Chart>
+   <Shapes evaluator="shape.unit.cube"/>
+  </MeshType>
+  <ArgumentEvaluator name="cellmlsplitreacdiff_simplex.mesh.argument" valueType="cellmlsplitreacdiff_simplex.mesh"/>
+  <ArgumentEvaluator name="cellmlsplitreacdiff_simplex.dofs.node" valueType="real.1d"/>
+  <DataResource name="cellmlsplitreacdiff_simplex.component1.connectivity.resource">
+   <DataResourceDescription>
+    <DataResourceHref xlink:href="cellmlsplitreacdiff_simplex.component1.connectivity" format="PLAIN_TEXT"/>
+   </DataResourceDescription>
+   <ArrayDataSource name="cellmlsplitreacdiff_simplex.component1.connectivity" location="1" rank="2">
+    <RawArraySize>576 4</RawArraySize>
+    <ArrayDataSize>576 4</ArrayDataSize>
+   </ArrayDataSource>
+  </DataResource>
+  <PiecewiseEvaluator name="cellmlsplitreacdiff_simplex.component1.template" valueType="real.1d">
+   <IndexEvaluators>
+    <IndexEvaluator evaluator="cellmlsplitreacdiff_simplex.mesh.argument.element" indexNumber="1"/>
+   </IndexEvaluators>
+   <EvaluatorMap default="cellmlsplitreacdiff_simplex.component1trilinearSimplex_3.evaluator"/>
+  </PiecewiseEvaluator>
+  <ParameterEvaluator name="cellmlsplitreacdiff_simplex.component13d.tetrahedron4" valueType="cellmlsplitreacdiff_simplex.nodes">
+   <DenseArrayData data="cellmlsplitreacdiff_simplex.component1.connectivity">
+    <DenseIndexes>
+     <IndexEvaluator evaluator="cellmlsplitreacdiff_simplex.mesh.argument.element"/>
+     <IndexEvaluator evaluator="localNodes.3d.tetrahedron4.argument"/>
+    </DenseIndexes>
+   </DenseArrayData>
+  </ParameterEvaluator>
+  <AggregateEvaluator name="cellmlsplitreacdiff_simplex.component1trilinearSimplex_3.parameters" valueType="parameters.3d.unit.trilinearSimplex">
+   <Bindings>
+    <BindIndex argument="localNodes.3d.tetrahedron4.argument" indexNumber="1"/>
+    <Bind argument="cellmlsplitreacdiff_simplex.nodes.argument" source="cellmlsplitreacdiff_simplex.component13d.tetrahedron4"/>
+   </Bindings>
+   <ComponentEvaluators default="cellmlsplitreacdiff_simplex.dofs.node"/>
+  </AggregateEvaluator>
+  <ReferenceEvaluator name="cellmlsplitreacdiff_simplex.component1trilinearSimplex_3.evaluator" evaluator="interpolator.3d.unit.trilinearSimplex">
+   <Bindings>
+    <Bind argument="chart.3d.argument" source="cellmlsplitreacdiff_simplex.mesh.argument.xi"/>
+    <Bind argument="parameters.3d.unit.trilinearSimplex.argument" source="cellmlsplitreacdiff_simplex.component1trilinearSimplex_3.parameters"/>
+   </Bindings>
+  </ReferenceEvaluator>
+  <DataResource name="cellmlsplitreacdiff_simplex.geometric.dofs.node.resource">
+   <DataResourceDescription>
+    <DataResourceHref xlink:href="cellmlsplitreacdiff_simplex.geometric.dofs.node" format="PLAIN_TEXT"/>
+   </DataResourceDescription>
+   <ArrayDataSource name="cellmlsplitreacdiff_simplex.geometric.dofs.node.data" location="1" rank="2">
+    <RawArraySize>175 3</RawArraySize>
+    <ArrayDataSize>175 3</ArrayDataSize>
+   </ArrayDataSource>
+  </DataResource>
+  <ParameterEvaluator name="cellmlsplitreacdiff_simplex.geometric.dofs.node" valueType="real.1d">
+   <DenseArrayData data="cellmlsplitreacdiff_simplex.geometric.dofs.node.data">
+    <DenseIndexes>
+     <IndexEvaluator evaluator="cellmlsplitreacdiff_simplex.nodes.argument"/>
+     <IndexEvaluator evaluator="coordinates.rc.3d.component.argument"/>
+    </DenseIndexes>
+   </DenseArrayData>
+  </ParameterEvaluator>
+  <AggregateEvaluator name="cellmlsplitreacdiff_simplex.geometric" valueType="coordinates.rc.3d">
+   <Bindings>
+    <BindIndex argument="coordinates.rc.3d.component.argument" indexNumber="1"/>
+    <Bind argument="cellmlsplitreacdiff_simplex.dofs.node" source="cellmlsplitreacdiff_simplex.geometric.dofs.node"/>
+   </Bindings>
+   <ComponentEvaluators>
+    <ComponentEvaluator component="1" evaluator="cellmlsplitreacdiff_simplex.component1.template"/>
+    <ComponentEvaluator component="2" evaluator="cellmlsplitreacdiff_simplex.component1.template"/>
+    <ComponentEvaluator component="3" evaluator="cellmlsplitreacdiff_simplex.component1.template"/>
+   </ComponentEvaluators>
+  </AggregateEvaluator>
+  <DataResource name="cellmlsplitreacdiff_simplex.dependent.dofs.node.resource">
+   <DataResourceDescription>
+    <DataResourceHref xlink:href="cellmlsplitreacdiff_simplex.dependent.dofs.node" format="PLAIN_TEXT"/>
+   </DataResourceDescription>
+   <ArrayDataSource name="cellmlsplitreacdiff_simplex.dependent.dofs.node.data" location="1" rank="1">
+    <RawArraySize>175</RawArraySize>
+    <ArrayDataSize>175</ArrayDataSize>
+   </ArrayDataSource>
+  </DataResource>
+  <ParameterEvaluator name="cellmlsplitreacdiff_simplex.dependent.dofs.node" valueType="real.1d">
+   <DenseArrayData data="cellmlsplitreacdiff_simplex.dependent.dofs.node.data">
+    <DenseIndexes>
+     <IndexEvaluator evaluator="cellmlsplitreacdiff_simplex.nodes.argument"/>
+    </DenseIndexes>
+   </DenseArrayData>
+  </ParameterEvaluator>
+  <ReferenceEvaluator name="cellmlsplitreacdiff_simplex.dependent" evaluator="cellmlsplitreacdiff_simplex.component1.template">
+   <Bindings>
+    <Bind argument="cellmlsplitreacdiff_simplex.dofs.node" source="cellmlsplitreacdiff_simplex.dependent.dofs.node"/>
+   </Bindings>
+  </ReferenceEvaluator>
+ </Region>
+</Fieldml>

@@ -64,7 +64,7 @@ endif
 
 EXAMPLE_PATH=ClassicalField/ReactionDiffusion/
 
-EXAMPLE_NAME = ReactionDiffusionConstantSource1D
+EXAMPLE_NAME = CellMLSplitSimplexLinearConvergence
 
 include $(GLOBAL_ROOT)/ExampleMakefile
 

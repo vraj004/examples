@@ -40,18 +40,19 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 
-!> \example ClassicalField/ReactionDiffusion/CellMLSplitReactionDiffusionParallel/src/CellMLSplitReactionDiffusionParallelExample.f90
+!> \example ClassicalField/ReactionDiffusion/CellMLSplitReacDiffLinearConvergence/src/CellMLSplitReacDiffLinearConvergenceExample.f90
 !! Example program to solve a diffusion equation using openCMISS calls.
-!! \htmlinclude ClassicalField/ReactionDiffusion/CellMLSplitReactionDiffusionParallel/history.html
+!! \htmlinclude ClassicalField/ReactionDiffusion/CellMLSplitReacDiffLinearConvergence/history.html
 !<
 
 !> Main program
-PROGRAM CELLMLSPLITREACDIFFFIELDMLPARALLELEXAMPLE
+PROGRAM CELLMLSPLITSIMPLEXLINEARCONVERGENCEEXAMPLE
 
 
   USE OPENCMISS
   USE MPI
   USE FIELDML_API
+
 
 #ifdef WIN32
   USE IFQWIN
@@ -88,16 +89,16 @@ PROGRAM CELLMLSPLITREACDIFFFIELDMLPARALLELEXAMPLE
   INTEGER(CMISSIntg), PARAMETER :: CellMLIntermediateFieldUserNumber=17
   INTEGER(CMISSIntg), PARAMETER :: CellMLParametersFieldUserNumber=18
 
+
   !Program types
   
   !Program variables
 
   INTEGER(CMISSIntg) :: NUMBER_GLOBAL_X_ELEMENTS,CONDITION,NUMBER_GLOBAL_Y_ELEMENTS
   INTEGER(CMISSIntg) :: NUMBER_OF_DOMAINS,NODE_NUMBER,NodeDomain,NUMBER_GLOBAL_ELEMENTS
-  INTEGER(CMISSIntg),DIMENSION(50) :: BCNODES
-  INTEGER(CMISSIntg),DIMENSION(9) :: RYRNODES
+  INTEGER(CMISSIntg),Allocatable :: LEFTNODES(:),RIGHTNODES(:),RYRNODES(:)
   INTEGER(CMISSIntg) :: MPI_IERROR,NUMBER_GLOBAL_Z_ELEMENTS
-  INTEGER :: node,STARTNODE,ENDNODE
+  INTEGER :: node,STARTNODE,ENDNODE,INCNODE,NODESXY,MIDNODE
   REAL(CMISSDP) :: VALUE
   INTEGER(CMISSIntg) :: constantModelIndex
 
@@ -128,6 +129,17 @@ PROGRAM CELLMLSPLITREACDIFFFIELDMLPARALLELEXAMPLE
 
 
   LOGICAL :: EXPORT_FIELD
+  CHARACTER(KIND=C_CHAR,LEN=*), PARAMETER :: outputDirectory = "."
+  CHARACTER(KIND=C_CHAR,LEN=*), PARAMETER :: outputFilename = outputDirectory//"/cellmlsplitreacdiff_simplex_6x4x4.xml"
+  CHARACTER(KIND=C_CHAR,LEN=*), PARAMETER :: basename = "cellmlsplitreacdiff_simplex"
+  CHARACTER(KIND=C_CHAR,LEN=*), PARAMETER :: dataFormat = "PLAIN_TEXT"
+
+  !FieldML parsing variables
+  TYPE(CMISSFieldMLIOType) :: fieldmlInfo, outputInfo
+  INTEGER(CMISSIntg) :: meshComponentCount  
+  INTEGER(CMISSIntg) :: typeHandle
+  INTEGER(CMISSIntg) :: coordinateCount
+
 
 #ifdef WIN32
   !Quickwin type
@@ -140,18 +152,6 @@ PROGRAM CELLMLSPLITREACDIFFFIELDMLPARALLELEXAMPLE
   INTEGER(CMISSIntg) :: NumberOfComputationalNodes,ComputationalNodeNumber
   INTEGER(CMISSIntg) :: EquationsSetIndex,CellMLIndex
   INTEGER(CMISSIntg) :: Err
-
-  !FieldML parameters
-  CHARACTER(KIND=C_CHAR,LEN=*), PARAMETER :: outputDirectory = "."
-  CHARACTER(KIND=C_CHAR,LEN=*), PARAMETER :: outputFilename = outputDirectory//"/cellmlsplitreacdiff_6x4x4.xml"
-  CHARACTER(KIND=C_CHAR,LEN=*), PARAMETER :: basename = "cellmlsplitreacdiff"
-  CHARACTER(KIND=C_CHAR,LEN=*), PARAMETER :: dataFormat = "PLAIN_TEXT"
-
-  !FieldML parsing variables
-  TYPE(CMISSFieldMLIOType) :: fieldmlInfo, outputInfo
-  INTEGER(CMISSIntg) :: meshComponentCount  
-  INTEGER(CMISSIntg) :: typeHandle
-  INTEGER(CMISSIntg) :: coordinateCount
 
   
 #ifdef WIN32
@@ -172,13 +172,26 @@ PROGRAM CELLMLSPLITREACDIFFFIELDMLPARALLELEXAMPLE
   CALL CMISSComputationalNumberOfNodesGet(NumberOfComputationalNodes,Err)
   CALL CMISSComputationalNodeNumberGet(ComputationalNodeNumber,Err)
 
-  NUMBER_GLOBAL_X_ELEMENTS=6
+  NUMBER_GLOBAL_X_ELEMENTS = 6
   NUMBER_GLOBAL_Y_ELEMENTS = 4
   NUMBER_GLOBAL_Z_ELEMENTS = 4
   NUMBER_GLOBAL_ELEMENTS = NUMBER_GLOBAL_X_ELEMENTS*NUMBER_GLOBAL_Y_ELEMENTS*NUMBER_GLOBAL_Z_ELEMENTS
   NUMBER_OF_DOMAINS=NumberOfComputationalNodes
 
-  !Set all diganostic levels on for testing
+  STARTNODE = 1
+  INCNODE = NUMBER_GLOBAL_X_ELEMENTS+1
+  NODESXY = (NUMBER_GLOBAL_Y_ELEMENTS+1)*(NUMBER_GLOBAL_Z_ELEMENTS+1)
+  MIDNODE = (NUMBER_GLOBAL_X_ELEMENTS/2)+1
+  ALLOCATE(RYRNODES(NODESXY))
+  ALLOCATE(LEFTNODES(NODESXY))
+  ALLOCATE(RIGHTNODES(NODESXY))
+  DO node=1,NODESXY
+    RYRNODES(node) = MIDNODE+((node-1)*INCNODE)
+    LEFTNODES(node) = STARTNODE+((node-1)*INCNODE)
+    RIGHTNODES(node) = STARTNODE+NUMBER_GLOBAL_X_ELEMENTS+((node-1)*INCNODE)
+    WRITE(*,*) RYRNODES(node)
+  ENDDO
+
 
 
   !Start the creation of a new RC coordinate system
@@ -201,15 +214,19 @@ PROGRAM CELLMLSPLITREACDIFFFIELDMLPARALLELEXAMPLE
   !Start the creation of a basis (default is trilinear lagrange)
   CALL CMISSBasis_Initialise(Basis,Err)
   CALL CMISSBasis_CreateStart(BasisUserNumber,Basis,Err)
-  !Set the basis to be a linear Lagrange basis
+  !Set the basis to be a simplex linear basis
+  CALL CMISSBasis_TypeSet(Basis,CMISS_BASIS_SIMPLEX_TYPE,Err)
   CALL CMISSBasis_NumberOfXiSet(Basis,3,Err)
+  !set interpolation to be linear
+  CALL CMISSBasis_InterpolationXiSet(Basis,(/CMISS_Basis_Linear_Simplex_Interpolation, &
+   &   CMISS_Basis_Linear_Simplex_Interpolation, CMISS_Basis_Linear_Simplex_Interpolation/),Err)
   !Finish the creation of the basis
   CALL CMISSBasis_CreateFinish(Basis,Err)
 
   !Start the creation of a generated mesh in the region
   CALL CMISSGeneratedMesh_Initialise(GeneratedMesh,Err)
   CALL CMISSGeneratedMesh_CreateStart(GeneratedMeshUserNumber,Region,GeneratedMesh,Err)
-  !Set up a regular 1D mesh
+  !Set up a regular 3D mesh
   CALL CMISSGeneratedMesh_TypeSet(GeneratedMesh,CMISS_GENERATED_MESH_REGULAR_MESH_TYPE,Err)
   !Set the default basis
   CALL CMISSGeneratedMesh_BasisSet(GeneratedMesh,Basis,Err)   
@@ -291,8 +308,8 @@ PROGRAM CELLMLSPLITREACDIFFFIELDMLPARALLELEXAMPLE
   CALL CMISSField_ComponentValuesInitialise(SourceField,CMISS_FIELD_U_VARIABLE_TYPE, &
     & CMISS_FIELD_VALUES_SET_TYPE,1,0.0_CMISSDP,Err)
 
-  RYRNODES = (/46,53,60,81,88,95,116,123,130/)
-  DO node=1,9
+  
+  DO node=1,NODESXY
     NODE_NUMBER = RYRNODES(node)
     CALL CMISSDecomposition_NodeDomainGet(Decomposition,NODE_NUMBER,1,NodeDomain,Err)
     IF(NodeDomain==ComputationalNodeNumber) THEN
@@ -511,10 +528,24 @@ PROGRAM CELLMLSPLITREACDIFFFIELDMLPARALLELEXAMPLE
 
   CALL CMISSBoundaryConditions_Initialise(BoundaryConditions,Err)
   CALL CMISSSolverEquations_BoundaryConditionsCreateStart(SolverEquations,BoundaryConditions,Err)
-  BCNODES = (/1,8,15,22,29,36,43,50,57,64,71,78,85,92,99,106,113,120,127,134,141,148,155,162,169, &
-  & 7,14,21,28,35,42,49,56,63,70,77,84,91,98,105,112,119,126,133,140,147,154,161,168,175/)
-  DO node=1,50
-    NODE_NUMBER = BCNODES(node)
+
+  DO node=1,NODESXY
+    NODE_NUMBER = LEFTNODES(node)
+    CALL CMISSDecomposition_NodeDomainGet(Decomposition,NODE_NUMBER,1,NodeDomain,Err)
+    IF(NodeDomain==ComputationalNodeNumber) THEN
+      CONDITION = CMISS_BOUNDARY_CONDITION_FIXED
+      VALUE=5.0_CMISSDP
+      CALL CMISSBoundaryConditions_SetNode(BoundaryConditions,DependentField, &
+       & CMISS_FIELD_U_VARIABLE_TYPE,1,CMISS_NO_GLOBAL_DERIV, &
+       & NODE_NUMBER,1,CONDITION,VALUE,Err)
+
+      !Need to set cellml model to zero at the nodes at which value of ca has been fixed.
+      CALL CMISSField_ParameterSetUpdateNode(CellMLModelsField,CMISS_FIELD_U_VARIABLE_TYPE,CMISS_FIELD_VALUES_SET_TYPE,&
+       & 1,1,NODE_NUMBER,1,0_CMISSIntg,Err) 
+    ENDIF
+  ENDDO
+  DO node=1,NODESXY
+    NODE_NUMBER = RIGHTNODES(node)
     CALL CMISSDecomposition_NodeDomainGet(Decomposition,NODE_NUMBER,1,NodeDomain,Err)
     IF(NodeDomain==ComputationalNodeNumber) THEN
       CONDITION = CMISS_BOUNDARY_CONDITION_FIXED
@@ -535,32 +566,25 @@ PROGRAM CELLMLSPLITREACDIFFFIELDMLPARALLELEXAMPLE
   !Solve the problem
   CALL CMISSProblem_Solve(Problem,Err)
 
-  !FieldML output
-  CALL CMISSFieldMLIO_Initialise( outputInfo, err )
-  CALL CMISSFieldML_OutputCreate( Mesh, outputDirectory, basename, dataFormat, outputInfo, err )
-  CALL CMISSFieldML_OutputAddImport( outputInfo, "coordinates.rc.3d", typeHandle, err )
-
-  CALL CMISSFieldML_OutputAddField( outputInfo, baseName//".geometric", dataFormat, GeometricField, &
-    & CMISS_FIELD_U_VARIABLE_TYPE, CMISS_FIELD_VALUES_SET_TYPE, err )
-  CALL CMISSFieldML_OutputAddField( outputInfo, baseName//".dependent", dataFormat, DependentField, &
-    & CMISS_FIELD_U_VARIABLE_TYPE, CMISS_FIELD_VALUES_SET_TYPE, err )
-
-  !CALL CMISSFieldML_OutputAddFieldComponents( outputInfo, typeHandle, baseName//".velocity", dataFormat, &
-  !  & DependentFieldNavierStokes, [1,2,3], CMISS_FIELD_U_VARIABLE_TYPE, CMISS_FIELD_VALUES_SET_TYPE, err )
-  !CALL CMISSFieldML_OutputAddImport( outputInfo, "real.1d", typeHandle, err )
-  !CALL CMISSFieldML_OutputAddFieldComponents( outputInfo, typeHandle, baseName//".pressure", dataFormat, &
-  !  & DependentFieldNavierStokes, [4], CMISS_FIELD_U_VARIABLE_TYPE, CMISS_FIELD_VALUES_SET_TYPE, err )
-  CALL CMISSFieldML_OutputWrite( outputInfo, outputFilename, err )
-  CALL CMISSFieldMLIO_Finalise( outputInfo, err )
-  
-
   EXPORT_FIELD=.TRUE.
   IF(EXPORT_FIELD) THEN
-!    CALL CMISSFields_Initialise(Fields,Err)
-!    CALL CMISSFields_Create(Region,Fields,Err)
-!    CALL CMISSFields_NodesExport(Fields,"CellMLSplitReactionDiffusionParallel","FORTRAN",Err)
-!    CALL CMISSFields_ElementsExport(Fields,"CellMLSplitReactionDiffusionParallel","FORTRAN",Err)
-!    CALL CMISSFields_Finalise(Fields,Err)
+    !FieldML output
+    CALL CMISSFieldMLIO_Initialise( outputInfo, err )
+    CALL CMISSFieldML_OutputCreate( Mesh, outputDirectory, basename, dataFormat, outputInfo, err )
+    CALL CMISSFieldML_OutputAddImport( outputInfo, "coordinates.rc.3d", typeHandle, err )
+
+    CALL CMISSFieldML_OutputAddField( outputInfo, baseName//".geometric", dataFormat, GeometricField, &
+      & CMISS_FIELD_U_VARIABLE_TYPE, CMISS_FIELD_VALUES_SET_TYPE, err )
+!    CALL CMISSFieldML_OutputAddField( outputInfo, baseName//".dependent", dataFormat, DependentField, &
+!      & CMISS_FIELD_U_VARIABLE_TYPE, CMISS_FIELD_VALUES_SET_TYPE, err )
+
+    !CALL CMISSFieldML_OutputAddFieldComponents( outputInfo, typeHandle, baseName//".velocity", dataFormat, &
+    !  & DependentFieldNavierStokes, [1,2,3], CMISS_FIELD_U_VARIABLE_TYPE, CMISS_FIELD_VALUES_SET_TYPE, err )
+    !CALL CMISSFieldML_OutputAddImport( outputInfo, "real.1d", typeHandle, err )
+    !CALL CMISSFieldML_OutputAddFieldComponents( outputInfo, typeHandle, baseName//".pressure", dataFormat, &
+    !  & DependentFieldNavierStokes, [4], CMISS_FIELD_U_VARIABLE_TYPE, CMISS_FIELD_VALUES_SET_TYPE, err )
+    CALL CMISSFieldML_OutputWrite( outputInfo, outputFilename, err )
+    CALL CMISSFieldMLIO_Finalise( outputInfo, err )
 
   ENDIF
   
@@ -570,4 +594,4 @@ PROGRAM CELLMLSPLITREACDIFFFIELDMLPARALLELEXAMPLE
 
   STOP
   
-END PROGRAM CELLMLSPLITREACDIFFFIELDMLPARALLELEXAMPLE
+END PROGRAM CELLMLSPLITSIMPLEXLINEARCONVERGENCEEXAMPLE
