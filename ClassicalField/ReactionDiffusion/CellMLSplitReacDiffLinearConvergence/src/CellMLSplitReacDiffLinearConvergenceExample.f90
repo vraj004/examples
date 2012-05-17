@@ -46,7 +46,7 @@
 !<
 
 !> Main program
-PROGRAM CELLMLSPLITSIMPLEXLINEARCONVERGENCEEXAMPLE
+PROGRAM CELLMLSPLITREACDIFFLINEARCONVERGENCEEXAMPLE
 
 
   USE OPENCMISS
@@ -221,11 +221,11 @@ PROGRAM CELLMLSPLITSIMPLEXLINEARCONVERGENCEEXAMPLE
   CALL CMISSBasis_Initialise(Basis,Err)
   CALL CMISSBasis_CreateStart(BasisUserNumber,Basis,Err)
   !Set the basis to be a lagrange linear basis
-  CALL CMISSBasis_TypeSet(Basis,CMISS_BASIS_SIMPLEX_TYPE,Err)
+  CALL CMISSBasis_TypeSet(Basis,CMISS_BASIS_LAGRANGE_HERMITE_TP_TYPE,Err)
   CALL CMISSBasis_NumberOfXiSet(Basis,3,Err)
   !set interpolation to be linear
-  CALL CMISSBasis_InterpolationXiSet(Basis,(/CMISS_Basis_Linear_SIMPLEX_Interpolation, &
-   &   CMISS_Basis_Linear_SIMPLEX_Interpolation, CMISS_Basis_Linear_SIMPLEX_Interpolation/),Err)
+  CALL CMISSBasis_InterpolationXiSet(Basis,(/CMISS_Basis_Linear_LAGRANGE_Interpolation, &
+   &   CMISS_Basis_Linear_LAGRANGE_Interpolation, CMISS_Basis_Linear_LAGRANGE_Interpolation/),Err)
   !Finish the creation of the basis
   CALL CMISSBasis_CreateFinish(Basis,Err)
 
@@ -602,4 +602,4 @@ PROGRAM CELLMLSPLITSIMPLEXLINEARCONVERGENCEEXAMPLE
 
   STOP
   
-END PROGRAM CELLMLSPLITSIMPLEXLINEARCONVERGENCEEXAMPLE
+END PROGRAM CELLMLSPLITREACDIFFLINEARCONVERGENCEEXAMPLE

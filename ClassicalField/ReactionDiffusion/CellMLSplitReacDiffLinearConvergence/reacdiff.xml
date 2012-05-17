@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<Fieldml version="0.5.0" xsi:noNamespaceSchemaLocation="http://www.fieldml.org/resources/xml/0.5/FieldML_0.5.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <Region name="reacdiff">
+  <Import xlink:href="http://www.fieldml.org/resources/xml/0.5/FieldML_Library_0.5.xml" region="library">
+   <ImportType localName="real.1d" remoteName="real.1d"/>
+   <ImportType localName="localNodes.3d.cube2x2x2" remoteName="localNodes.3d.cube2x2x2"/>
+   <ImportEvaluator localName="localNodes.3d.cube2x2x2.argument" remoteName="localNodes.3d.cube2x2x2.argument"/>
+   <ImportEvaluator localName="interpolator.3d.unit.trilinearLagrange" remoteName="interpolator.3d.unit.trilinearLagrange"/>
+   <ImportType localName="parameters.3d.unit.trilinearLagrange" remoteName="parameters.3d.unit.trilinearLagrange"/>
+   <ImportType localName="chart.3d" remoteName="chart.3d"/>
+   <ImportEvaluator localName="chart.3d.argument" remoteName="chart.3d.argument"/>
+   <ImportEvaluator localName="parameters.3d.unit.trilinearLagrange.argument" remoteName="parameters.3d.unit.trilinearLagrange.argument"/>
+   <ImportEvaluator localName="shape.unit.cube" remoteName="shape.unit.cube"/>
+   <ImportType localName="coordinates.rc.3d" remoteName="coordinates.rc.3d"/>
+   <ImportType localName="coordinates.rc.3d.component" remoteName="coordinates.rc.3d.component"/>
+   <ImportEvaluator localName="coordinates.rc.3d.component.argument" remoteName="coordinates.rc.3d.component.argument"/>
+  </Import>
+  <EnsembleType name="reacdiff.nodes">
+   <Members>
+    <MemberRange min="1" max="9945"/>
+   </Members>
+  </EnsembleType>
+  <ArgumentEvaluator name="reacdiff.nodes.argument" valueType="reacdiff.nodes"/>
+  <MeshType name="reacdiff.mesh">
+   <Elements name="element">
+    <Members>
+     <MemberRange min="1" max="8192"/>
+    </Members>
+   </Elements>
+   <Chart name="xi">
+    <Components name="reacdiff.mesh.xi.component" count="3"/>
+   </Chart>
+   <Shapes evaluator="shape.unit.cube"/>
+  </MeshType>
+  <ArgumentEvaluator name="reacdiff.mesh.argument" valueType="reacdiff.mesh"/>
+  <ArgumentEvaluator name="reacdiff.dofs.node" valueType="real.1d"/>
+  <DataResource name="reacdiff.component1.connectivity.resource">
+   <DataResourceDescription>
+    <DataResourceHref xlink:href="reacdiff.component1.connectivity" format="PLAIN_TEXT"/>
+   </DataResourceDescription>
+   <ArrayDataSource name="reacdiff.component1.connectivity" location="1" rank="2">
+    <RawArraySize>8192 8</RawArraySize>
+    <ArrayDataSize>8192 8</ArrayDataSize>
+   </ArrayDataSource>
+  </DataResource>
+  <PiecewiseEvaluator name="reacdiff.component1.template" valueType="real.1d">
+   <IndexEvaluators>
+    <IndexEvaluator evaluator="reacdiff.mesh.argument.element" indexNumber="1"/>
+   </IndexEvaluators>
+   <EvaluatorMap default="reacdiff.component1trilinearLagrange_3.evaluator"/>
+  </PiecewiseEvaluator>
+  <ParameterEvaluator name="reacdiff.component13d.cube2x2x2" valueType="reacdiff.nodes">
+   <DenseArrayData data="reacdiff.component1.connectivity">
+    <DenseIndexes>
+     <IndexEvaluator evaluator="reacdiff.mesh.argument.element"/>
+     <IndexEvaluator evaluator="localNodes.3d.cube2x2x2.argument"/>
+    </DenseIndexes>
+   </DenseArrayData>
+  </ParameterEvaluator>
+  <AggregateEvaluator name="reacdiff.component1trilinearLagrange_3.parameters" valueType="parameters.3d.unit.trilinearLagrange">
+   <Bindings>
+    <BindIndex argument="localNodes.3d.cube2x2x2.argument" indexNumber="1"/>
+    <Bind argument="reacdiff.nodes.argument" source="reacdiff.component13d.cube2x2x2"/>
+   </Bindings>
+   <ComponentEvaluators default="reacdiff.dofs.node"/>
+  </AggregateEvaluator>
+  <ReferenceEvaluator name="reacdiff.component1trilinearLagrange_3.evaluator" evaluator="interpolator.3d.unit.trilinearLagrange">
+   <Bindings>
+    <Bind argument="chart.3d.argument" source="reacdiff.mesh.argument.xi"/>
+    <Bind argument="parameters.3d.unit.trilinearLagrange.argument" source="reacdiff.component1trilinearLagrange_3.parameters"/>
+   </Bindings>
+  </ReferenceEvaluator>
+  <DataResource name="reacdiff.geometric.dofs.node.resource">
+   <DataResourceDescription>
+    <DataResourceHref xlink:href="reacdiff.geometric.dofs.node" format="PLAIN_TEXT"/>
+   </DataResourceDescription>
+   <ArrayDataSource name="reacdiff.geometric.dofs.node.data" location="1" rank="2">
+    <RawArraySize>9945 3</RawArraySize>
+    <ArrayDataSize>9945 3</ArrayDataSize>
+   </ArrayDataSource>
+  </DataResource>
+  <ParameterEvaluator name="reacdiff.geometric.dofs.node" valueType="real.1d">
+   <DenseArrayData data="reacdiff.geometric.dofs.node.data">
+    <DenseIndexes>
+     <IndexEvaluator evaluator="reacdiff.nodes.argument"/>
+     <IndexEvaluator evaluator="coordinates.rc.3d.component.argument"/>
+    </DenseIndexes>
+   </DenseArrayData>
+  </ParameterEvaluator>
+  <AggregateEvaluator name="reacdiff.geometric" valueType="coordinates.rc.3d">
+   <Bindings>
+    <BindIndex argument="coordinates.rc.3d.component.argument" indexNumber="1"/>
+    <Bind argument="reacdiff.dofs.node" source="reacdiff.geometric.dofs.node"/>
+   </Bindings>
+   <ComponentEvaluators>
+    <ComponentEvaluator component="1" evaluator="reacdiff.component1.template"/>
+    <ComponentEvaluator component="2" evaluator="reacdiff.component1.template"/>
+    <ComponentEvaluator component="3" evaluator="reacdiff.component1.template"/>
+   </ComponentEvaluators>
+  </AggregateEvaluator>
+  <DataResource name="reacdiff.dependent.dofs.node.resource">
+   <DataResourceDescription>
+    <DataResourceHref xlink:href="reacdiff.dependent.dofs.node" format="PLAIN_TEXT"/>
+   </DataResourceDescription>
+   <ArrayDataSource name="reacdiff.dependent.dofs.node.data" location="1" rank="1">
+    <RawArraySize>9945</RawArraySize>
+    <ArrayDataSize>9945</ArrayDataSize>
+   </ArrayDataSource>
+  </DataResource>
+  <ParameterEvaluator name="reacdiff.dependent.dofs.node" valueType="real.1d">
+   <DenseArrayData data="reacdiff.dependent.dofs.node.data">
+    <DenseIndexes>
+     <IndexEvaluator evaluator="reacdiff.nodes.argument"/>
+    </DenseIndexes>
+   </DenseArrayData>
+  </ParameterEvaluator>
+  <ReferenceEvaluator name="reacdiff.dependent" evaluator="reacdiff.component1.template">
+   <Bindings>
+    <Bind argument="reacdiff.dofs.node" source="reacdiff.dependent.dofs.node"/>
+   </Bindings>
+  </ReferenceEvaluator>
+ </Region>
+</Fieldml>
