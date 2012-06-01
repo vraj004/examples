@@ -1,0 +1,59 @@
+ Group name: Region 2           
+ Shape.  Dimension=3, simplex(2;3)*simplex*simplex
+ #Scale factor sets= 1
+ l.simplex(2;3)*l.simplex*l.simplex, #Scale factors=4
+ #Nodes=           4
+ #Fields=1
+ 1) Coordinate, coordinate, rectangular cartesian, #Components=3
+   x.   l.simplex(2;3)*l.simplex*l.simplex, no modify, standard node based.
+     #Nodes= 4
+     1.  #Values=1
+      Value indices:     1
+      Scale factor indices:    1
+     2.  #Values=1
+      Value indices:     1
+      Scale factor indices:    2
+     3.  #Values=1
+      Value indices:     1
+      Scale factor indices:    3
+     4.  #Values=1
+      Value indices:     1
+      Scale factor indices:    4
+   y.   l.simplex(2;3)*l.simplex*l.simplex, no modify, standard node based.
+     #Nodes= 4
+     1.  #Values=1
+      Value indices:     1
+      Scale factor indices:    1
+     2.  #Values=1
+      Value indices:     1
+      Scale factor indices:    2
+     3.  #Values=1
+      Value indices:     1
+      Scale factor indices:    3
+     4.  #Values=1
+      Value indices:     1
+      Scale factor indices:    4
+   z.   l.simplex(2;3)*l.simplex*l.simplex, no modify, standard node based.
+     #Nodes= 4
+     1.  #Values=1
+      Value indices:     1
+      Scale factor indices:    1
+     2.  #Values=1
+      Value indices:     1
+      Scale factor indices:    2
+     3.  #Values=1
+      Value indices:     1
+      Scale factor indices:    3
+     4.  #Values=1
+      Value indices:     1
+      Scale factor indices:    4
+ Element:            1 0 0
+   Nodes:
+           1           2           3           4
+   Scale factors:
+     1.0000000000000000E+00   1.0000000000000000E+00   1.0000000000000000E+00   1.0000000000000000E+00
+ Element:            2 0 0
+   Nodes:
+           2           3           4           5
+   Scale factors:
+     1.0000000000000000E+00   1.0000000000000000E+00   1.0000000000000000E+00   1.0000000000000000E+00
