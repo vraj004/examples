@@ -105,9 +105,9 @@ PROGRAM UNIAXIALEXTENSIONEXAMPLE
 
   INTEGER(CMISSIntg) :: NumberGlobalXElements,NumberGlobalYElements,NumberGlobalZElements
   INTEGER(CMISSIntg) :: MPI_IERROR
-  INTEGER(CMISSIntg) :: EquationsSetIndex  
+  INTEGER(CMISSIntg) :: EquationsSetIndex,i,node,NodeDomain
   INTEGER(CMISSIntg) :: NumberOfComputationalNodes,NumberOfDomains,ComputationalNodeNumber
-
+  REAL(CMISSDP) :: Fx,Fy,Fz
   !CMISS variables
 
   TYPE(CMISSBasisType) :: Basis
@@ -324,7 +324,7 @@ PROGRAM UNIAXIALEXTENSIONEXAMPLE
 
   !Set Mooney-Rivlin constants c10 and c01 to 2.0 and 6.0 respectively.
   CALL CMISSField_ComponentValuesInitialise(MaterialField,CMISS_FIELD_U_VARIABLE_TYPE,CMISS_FIELD_VALUES_SET_TYPE,1,2.0_CMISSDP,Err)
-  CALL CMISSField_ComponentValuesInitialise(MaterialField,CMISS_FIELD_U_VARIABLE_TYPE,CMISS_FIELD_VALUES_SET_TYPE,2,6.0_CMISSDP,Err)
+  CALL CMISSField_ComponentValuesInitialise(MaterialField,CMISS_FIELD_U_VARIABLE_TYPE,CMISS_FIELD_VALUES_SET_TYPE,2,0.0_CMISSDP,Err)
 
   !Create a dependent field with two variables and four components
   CALL CMISSField_Initialise(DependentField,Err)
@@ -422,25 +422,25 @@ PROGRAM UNIAXIALEXTENSIONEXAMPLE
     & 0.0_CMISSDP,Err)
   CALL CMISSBoundaryConditions_SetNode(BoundaryConditions,DependentField,CMISS_FIELD_U_VARIABLE_TYPE,1,1,2,1, &
     & CMISS_BOUNDARY_CONDITION_FIXED, &
-    & 1.1_CMISSDP,Err)
+    & 1.5_CMISSDP,Err)
   CALL CMISSBoundaryConditions_SetNode(BoundaryConditions,DependentField,CMISS_FIELD_U_VARIABLE_TYPE,1,1,3,1, &
     & CMISS_BOUNDARY_CONDITION_FIXED, &
     & 0.0_CMISSDP,Err)
   CALL CMISSBoundaryConditions_SetNode(BoundaryConditions,DependentField,CMISS_FIELD_U_VARIABLE_TYPE,1,1,4,1, &
     & CMISS_BOUNDARY_CONDITION_FIXED, &
-    & 1.1_CMISSDP,Err)
+    & 1.5_CMISSDP,Err)
   CALL CMISSBoundaryConditions_SetNode(BoundaryConditions,DependentField,CMISS_FIELD_U_VARIABLE_TYPE,1,1,5,1, &
     & CMISS_BOUNDARY_CONDITION_FIXED, &
     & 0.0_CMISSDP,Err)
   CALL CMISSBoundaryConditions_SetNode(BoundaryConditions,DependentField,CMISS_FIELD_U_VARIABLE_TYPE,1,1,6,1, &
     & CMISS_BOUNDARY_CONDITION_FIXED, &
-    & 1.1_CMISSDP,Err)
+    & 1.5_CMISSDP,Err)
   CALL CMISSBoundaryConditions_SetNode(BoundaryConditions,DependentField,CMISS_FIELD_U_VARIABLE_TYPE,1,1,7,1, &
     & CMISS_BOUNDARY_CONDITION_FIXED, &
     & 0.0_CMISSDP,Err)
   CALL CMISSBoundaryConditions_SetNode(BoundaryConditions,DependentField,CMISS_FIELD_U_VARIABLE_TYPE,1,1,8,1, &
     & CMISS_BOUNDARY_CONDITION_FIXED, &
-    & 1.1_CMISSDP,Err)
+    & 1.5_CMISSDP,Err)
 
   !Fix nodes 1,2,5,6 at y=0
   CALL CMISSBoundaryConditions_SetNode(BoundaryConditions,DependentField,CMISS_FIELD_U_VARIABLE_TYPE,1,1,1,2, &
@@ -481,6 +481,22 @@ PROGRAM UNIAXIALEXTENSIONEXAMPLE
   CALL CMISSFields_NodesExport(Fields,"UniaxialExtension","FORTRAN",Err)
   CALL CMISSFields_ElementsExport(Fields,"UniaxialExtension","FORTRAN",Err)
   CALL CMISSFields_Finalise(Fields,Err)
+
+  DO i = 1,8
+    node = i
+    CALL CMISSDecomposition_NodeDomainGet(Decomposition,node,1,NodeDomain,Err)
+    IF(NodeDomain==ComputationalNodeNumber) THEN
+      !get nodal coordinates in deformed state
+      !get nodal forces (?) in deformed state
+      CALL CMISSField_ParameterSetGetNode(DependentField,CMISS_FIELD_DELUDELN_VARIABLE_TYPE,CMISS_FIELD_VALUES_SET_TYPE,1, &
+       &   1,node,1,Fx,Err)
+      CALL CMISSField_ParameterSetGetNode(DependentField,CMISS_FIELD_DELUDELN_VARIABLE_TYPE,CMISS_FIELD_VALUES_SET_TYPE,1, &
+       &   1,node,2,Fy,Err)
+      CALL CMISSField_ParameterSetGetNode(DependentField,CMISS_FIELD_DELUDELN_VARIABLE_TYPE,CMISS_FIELD_VALUES_SET_TYPE,1, &
+       &   1,node,3,Fz,Err)
+      WRITE(*,*) 'Node number: ',node,'Fx: ',Fx
+    ENDIF
+  ENDDO
 
   CALL CMISSFinalise(Err)
 

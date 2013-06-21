@@ -231,7 +231,7 @@ PROGRAM QUADRATICTETEXAMPLE
   !Geometry (and displacement) nodes
   CALL CMISSMeshElements_Initialise(ElementsQuad,Err)
   CALL CMISSMeshElements_CreateStart(Mesh,MeshComponentNumberQuad,BasisQuad,ElementsQuad,Err)
-  CALL CMISSMeshElements_NodesSet(ElementsQuad,1,(/1,5,2,7,6,3,8,10,9,4/),Err)
+  CALL CMISSMeshElements_NodesSet(ElementsQuad,1,(/1,5,2,7,6,3,8,10,9,4/),Err) !(/1,5,2,7,6,3,8,10,9,4/),Err)
   CALL CMISSMeshElements_CreateFinish(ElementsQuad,Err)
   !Pressure nodes
   CALL CMISSMeshElements_Initialise(ElementsLin,Err)
@@ -332,6 +332,12 @@ PROGRAM QUADRATICTETEXAMPLE
   CALL CMISSField_ParameterSetUpdateNode(GeometricField,CMISS_FIELD_U_VARIABLE_TYPE,CMISS_FIELD_VALUES_SET_TYPE,1,1,10,3, &
     & 0.5_CMISSDP,Err)
 
+    CALL CMISSFields_Initialise(Fields,Err)
+    CALL CMISSFields_Create(Region,Fields,Err)
+    CALL CMISSFields_NodesExport(Fields,"output_mesh","FORTRAN",Err)
+    CALL CMISSFields_ElementsExport(Fields,"output_mesh","FORTRAN",Err)
+    CALL CMISSFields_Finalise(Fields,Err)
+
   !Create a fibre field and attach it to the geometric field
   CALL CMISSField_Initialise(FibreField,Err)
   CALL CMISSField_CreateStart(FieldFibreUserNumber,Region,FibreField,Err)
@@ -344,6 +350,7 @@ PROGRAM QUADRATICTETEXAMPLE
   CALL CMISSField_ComponentMeshComponentSet(FibreField,CMISS_FIELD_U_VARIABLE_TYPE,2,MeshComponentNumberQuad,Err)
   CALL CMISSField_ComponentMeshComponentSet(FibreField,CMISS_FIELD_U_VARIABLE_TYPE,3,MeshComponentNumberQuad,Err)
   CALL CMISSField_CreateFinish(FibreField,Err)
+
 
   !Create a material field and attach it to the geometric field  
   CALL CMISSField_Initialise(MaterialField,Err)
@@ -384,7 +391,7 @@ PROGRAM QUADRATICTETEXAMPLE
   !Create the equations_set
   CALL CMISSField_Initialise(EquationsSetField,Err)
   CALL CMISSEquationsSet_Initialise(EquationsSet,Err)
-  CALL CMISSEquationsSet_CreateStart(EquationSetUserNumber,Region,FibreField,CMISS_EQUATIONS_SET_ELASTICITY_CLASS, &
+  CALL CMISSEquationsSet_CreateStart(EquationSetUserNumber,Region,GeometricField,CMISS_EQUATIONS_SET_ELASTICITY_CLASS, &
     & CMISS_EQUATIONS_SET_FINITE_ELASTICITY_TYPE,CMISS_EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE,EquationsSetFieldUserNumber, &
       & EquationsSetField,&
     & EquationsSet,Err)
@@ -429,6 +436,7 @@ PROGRAM QUADRATICTETEXAMPLE
 
   !Create the problem solvers
   CALL CMISSSolver_Initialise(Solver,Err)
+  CALL CMISSSolver_Initialise(LinearSolver,Err)
   CALL CMISSProblem_SolversCreateStart(Problem,Err)
   CALL CMISSProblem_SolverGet(Problem,CMISS_CONTROL_LOOP_NODE,1,Solver,Err)
   CALL CMISSSolver_OutputTypeSet(Solver,CMISS_SOLVER_PROGRESS_OUTPUT,Err)

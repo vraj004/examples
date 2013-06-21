@@ -51,6 +51,7 @@ PROGRAM LINEARTETEXAMPLE
 
   USE OPENCMISS
   USE MPI
+  USE FIELDML_API
 
 #ifdef WIN32
   USE IFQWIN
@@ -126,6 +127,18 @@ PROGRAM LINEARTETEXAMPLE
   TYPE(CMISSNodesType) :: Nodes
   TYPE(CMISSMeshElementsType) :: Elements
 
+  !FieldML output parameters
+  CHARACTER(KIND=C_CHAR,LEN=*), PARAMETER :: outputDirectory = "."
+  CHARACTER(KIND=C_CHAR,LEN=*), PARAMETER :: outputFilename = outputDirectory//"/cell.xml"
+  CHARACTER(KIND=C_CHAR,LEN=*), PARAMETER :: basename = "cell"
+  CHARACTER(KIND=C_CHAR,LEN=*), PARAMETER :: dataFormat = "PLAIN_TEXT"
+  !FieldML parsing variables
+  LOGICAL :: EXPORT_FIELD=.TRUE.
+  TYPE(CMISSFieldMLIOType) :: fieldmlInfo, outputInfo
+  INTEGER(CMISSIntg) :: meshComponentCount  
+  INTEGER(CMISSIntg) :: typeHandle
+  INTEGER(CMISSIntg) :: coordinateCount
+
   !REAL(CMISSDP), POINTER :: FieldData(:)
 
 #ifdef WIN32
@@ -156,8 +169,10 @@ PROGRAM LINEARTETEXAMPLE
   WRITE(*,'(A)') "Program starting."
 
   !Set all diganostic levels on for testing
-  CALL CMISSDiagnosticsSetOn(CMISS_FROM_DIAG_TYPE,(/1,2,3,4,5/),"Diagnostics",(/"PROBLEM_FINITE_ELEMENT_CALCULATE"/),Err) !CMISS_ALL_DIAG_TYPE
+  !CALL CMISSDiagnosticsSetOn(CMISS_FROM_DIAG_TYPE,(/1,2,3,4,5/),"Diagnostics", &
+  !  & (//),Err) !CMISS_ALL_DIAG_TYPE
 
+    
   !Get the number of computational nodes and this computational node number
   CALL CMISSComputationalNumberOfNodesGet(NumberOfComputationalNodes,Err)
   CALL CMISSComputationalNodeNumberGet(ComputationalNodeNumber,Err)
@@ -210,7 +225,8 @@ PROGRAM LINEARTETEXAMPLE
 
   CALL CMISSMeshElements_Initialise(Elements,Err)
   CALL CMISSMeshElements_CreateStart(Mesh,MeshComponentNumber,Basis,Elements,Err)
-  CALL CMISSMeshElements_NodesSet(Elements,1,(/1,2,3,4/),Err)
+  CALL CMISSMeshElements_NodesSet(Elements,1,(/2,1,3,4/),Err)
+
   CALL CMISSMeshElements_CreateFinish(Elements,Err)
 
   CALL CMISSMesh_CreateFinish(Mesh,Err) 
@@ -263,18 +279,24 @@ PROGRAM LINEARTETEXAMPLE
   CALL CMISSField_ParameterSetUpdateNode(GeometricField,CMISS_FIELD_U_VARIABLE_TYPE,CMISS_FIELD_VALUES_SET_TYPE,1,1,4,3, &
     & 1.0_CMISSDP,Err)
 
+  CALL CMISSFields_Initialise(Fields,Err)
+  CALL CMISSFields_Create(Region,Fields,Err)
+  CALL CMISSFields_NodesExport(Fields,"LinearTetGeom","FORTRAN",Err)
+  CALL CMISSFields_ElementsExport(Fields,"LinearTetGeom","FORTRAN",Err)
+  CALL CMISSFields_Finalise(Fields,Err)
+
   !Create a fibre field and attach it to the geometric field  
-  CALL CMISSField_Initialise(FibreField,Err)
-  CALL CMISSField_CreateStart(FieldFibreUserNumber,Region,FibreField,Err)
-  CALL CMISSField_TypeSet(FibreField,CMISS_FIELD_FIBRE_TYPE,Err)
-  CALL CMISSField_MeshDecompositionSet(FibreField,Decomposition,Err)        
-  CALL CMISSField_GeometricFieldSet(FibreField,GeometricField,Err)
-  CALL CMISSField_NumberOfVariablesSet(FibreField,FieldFibreNumberOfVariables,Err)
-  CALL CMISSField_NumberOfComponentsSet(FibreField,CMISS_FIELD_U_VARIABLE_TYPE,FieldFibreNumberOfComponents,Err)  
-  CALL CMISSField_ComponentMeshComponentSet(FibreField,CMISS_FIELD_U_VARIABLE_TYPE,1,MeshComponentNumber,Err)
-  CALL CMISSField_ComponentMeshComponentSet(FibreField,CMISS_FIELD_U_VARIABLE_TYPE,2,MeshComponentNumber,Err)
-  CALL CMISSField_ComponentMeshComponentSet(FibreField,CMISS_FIELD_U_VARIABLE_TYPE,3,MeshComponentNumber,Err)
-  CALL CMISSField_CreateFinish(FibreField,Err)
+  !CALL CMISSField_Initialise(FibreField,Err)
+  !CALL CMISSField_CreateStart(FieldFibreUserNumber,Region,FibreField,Err)
+  !CALL CMISSField_TypeSet(FibreField,CMISS_FIELD_FIBRE_TYPE,Err)
+  !CALL CMISSField_MeshDecompositionSet(FibreField,Decomposition,Err)        
+  !CALL CMISSField_GeometricFieldSet(FibreField,GeometricField,Err)
+  !CALL CMISSField_NumberOfVariablesSet(FibreField,FieldFibreNumberOfVariables,Err)
+  !CALL CMISSField_NumberOfComponentsSet(FibreField,CMISS_FIELD_U_VARIABLE_TYPE,FieldFibreNumberOfComponents,Err)  
+  !CALL CMISSField_ComponentMeshComponentSet(FibreField,CMISS_FIELD_U_VARIABLE_TYPE,1,MeshComponentNumber,Err)
+  !CALL CMISSField_ComponentMeshComponentSet(FibreField,CMISS_FIELD_U_VARIABLE_TYPE,2,MeshComponentNumber,Err)
+  !CALL CMISSField_ComponentMeshComponentSet(FibreField,CMISS_FIELD_U_VARIABLE_TYPE,3,MeshComponentNumber,Err)
+  !CALL CMISSField_CreateFinish(FibreField,Err)
 
   !Create a material field and attach it to the geometric field  
   CALL CMISSField_Initialise(MaterialField,Err)
@@ -317,9 +339,10 @@ PROGRAM LINEARTETEXAMPLE
   !Create the equations_set
   CALL CMISSField_Initialise(EquationsSetField,Err)
   CALL CMISSEquationsSet_Initialise(EquationsSet,Err)
-  CALL CMISSEquationsSet_CreateStart(EquationSetUserNumber,Region,FibreField,CMISS_EQUATIONS_SET_ELASTICITY_CLASS,&
-    & CMISS_EQUATIONS_SET_FINITE_ELASTICITY_TYPE,CMISS_EQUATIONS_SET_NO_SUBTYPE,EquationsSetFieldUserNumber,EquationsSetField,&
-    & EquationsSet,Err)
+  CALL CMISSEquationsSet_CreateStart(EquationSetUserNumber,Region,GeometricField, &
+    & CMISS_EQUATIONS_SET_ELASTICITY_CLASS,&
+    & CMISS_EQUATIONS_SET_FINITE_ELASTICITY_TYPE,CMISS_EQUATIONS_SET_NO_SUBTYPE,EquationsSetFieldUserNumber, &
+    & EquationsSetField,EquationsSet,Err)
   CALL CMISSEquationsSet_CreateFinish(EquationsSet,Err)
 
   CALL CMISSEquationsSet_DependentCreateStart(EquationsSet,FieldDependentUserNumber,DependentField,Err) 
@@ -342,7 +365,8 @@ PROGRAM LINEARTETEXAMPLE
     & 2,DependentField,CMISS_FIELD_U_VARIABLE_TYPE,CMISS_FIELD_VALUES_SET_TYPE,2,Err)
   CALL CMISSField_ParametersToFieldParametersComponentCopy(GeometricField,CMISS_FIELD_U_VARIABLE_TYPE,CMISS_FIELD_VALUES_SET_TYPE, &
     & 3,DependentField,CMISS_FIELD_U_VARIABLE_TYPE,CMISS_FIELD_VALUES_SET_TYPE,3,Err)
-  CALL CMISSField_ComponentValuesInitialise(DependentField,CMISS_FIELD_U_VARIABLE_TYPE,CMISS_FIELD_VALUES_SET_TYPE,4,-8.0_CMISSDP, &
+  CALL CMISSField_ComponentValuesInitialise(DependentField,CMISS_FIELD_U_VARIABLE_TYPE,CMISS_FIELD_VALUES_SET_TYPE,4, &
+    & -8.0_CMISSDP, &
     & Err)
 
   !Define the problem
@@ -362,9 +386,9 @@ PROGRAM LINEARTETEXAMPLE
   CALL CMISSProblem_SolversCreateStart(Problem,Err)
   CALL CMISSProblem_SolverGet(Problem,CMISS_CONTROL_LOOP_NODE,1,Solver,Err)
   CALL CMISSSolver_OutputTypeSet(Solver,CMISS_SOLVER_PROGRESS_OUTPUT,Err)
-  CALL CMISSSolver_NewtonJacobianCalculationTypeSet(Solver,CMISS_SOLVER_NEWTON_JACOBIAN_FD_CALCULATED,Err)
+  CALL CMISSSolver_NewtonJacobianCalculationTypeSet(Solver,CMISS_SOLVER_NEWTON_JACOBIAN_EQUATIONS_CALCULATED,Err)
   CALL CMISSSolver_NewtonLinearSolverGet(Solver,LinearSolver,Err)
-  CALL CMISSSolver_LinearTypeSet(LinearSolver,CMISS_SOLVER_LINEAR_DIRECT_SOLVE_TYPE,Err)
+  CALL CMISSSolver_LinearTypeSet(LinearSolver,CMISS_SOLVER_LINEAR_ITERATIVE_SOLVE_TYPE,Err)
   CALL CMISSProblem_SolversCreateFinish(Problem,Err)
 
   !Create the problem solver equations
@@ -381,13 +405,13 @@ PROGRAM LINEARTETEXAMPLE
   CALL CMISSBoundaryConditions_Initialise(BoundaryConditions,Err)
   CALL CMISSSolverEquations_BoundaryConditionsCreateStart(SolverEquations,BoundaryConditions,Err)
 
-  !Fix nodes 1,3,4 at x=0 and nodes 2 at x=1.1
+  !Fix nodes 1,3,4 at x=0 and nodes 2 is left free.
   CALL CMISSBoundaryConditions_SetNode(BoundaryConditions,DependentField,CMISS_FIELD_U_VARIABLE_TYPE,1,1,1,1, &
     & CMISS_BOUNDARY_CONDITION_FIXED, &
     & 0.0_CMISSDP,Err)
-  CALL CMISSBoundaryConditions_SetNode(BoundaryConditions,DependentField,CMISS_FIELD_U_VARIABLE_TYPE,1,1,2,1, &
-    & CMISS_BOUNDARY_CONDITION_FIXED, &
-    & 1.1_CMISSDP,Err)
+  !CALL CMISSBoundaryConditions_SetNode(BoundaryConditions,DependentField,CMISS_FIELD_U_VARIABLE_TYPE,1,1,2,1, &
+  !  & CMISS_BOUNDARY_CONDITION_FIXED, &
+  !  & 1.0_CMISSDP,Err)
   CALL CMISSBoundaryConditions_SetNode(BoundaryConditions,DependentField,CMISS_FIELD_U_VARIABLE_TYPE,1,1,3,1, &
     & CMISS_BOUNDARY_CONDITION_FIXED, &
     & 0.0_CMISSDP,Err)
@@ -395,18 +419,24 @@ PROGRAM LINEARTETEXAMPLE
     & CMISS_BOUNDARY_CONDITION_FIXED, &
     & 0.0_CMISSDP,Err)
 
-  !Fix nodes 1,2,4 at y=0
+  !Fix nodes 1,2,4 at y=0, 3 set free in y.
   CALL CMISSBoundaryConditions_SetNode(BoundaryConditions,DependentField,CMISS_FIELD_U_VARIABLE_TYPE,1,1,1,2, &
     & CMISS_BOUNDARY_CONDITION_FIXED, &
     & 0.0_CMISSDP,Err)
   CALL CMISSBoundaryConditions_SetNode(BoundaryConditions,DependentField,CMISS_FIELD_U_VARIABLE_TYPE,1,1,2,2, &
     & CMISS_BOUNDARY_CONDITION_FIXED, &
     & 0.0_CMISSDP,Err)
+  !CALL CMISSBoundaryConditions_SetNode(BoundaryConditions,DependentField,CMISS_FIELD_U_VARIABLE_TYPE,1,1,3,2, &
+  !  & CMISS_BOUNDARY_CONDITION_FIXED, &
+  !  & 1.0_CMISSDP,Err)
   CALL CMISSBoundaryConditions_SetNode(BoundaryConditions,DependentField,CMISS_FIELD_U_VARIABLE_TYPE,1,1,4,2, &
     & CMISS_BOUNDARY_CONDITION_FIXED, &
     & 0.0_CMISSDP,Err)
 
-  !Fix nodes 1,2,3 at z=0
+  !Fix node 4 at z=2.0, 1,2,3 at z=0
+  CALL CMISSBoundaryConditions_SetNode(BoundaryConditions,DependentField,CMISS_FIELD_U_VARIABLE_TYPE,1,1,4,3, &
+    & CMISS_BOUNDARY_CONDITION_FIXED, &
+    & 1.1_CMISSDP,Err)
   CALL CMISSBoundaryConditions_SetNode(BoundaryConditions,DependentField,CMISS_FIELD_U_VARIABLE_TYPE,1,1,1,3, &
     & CMISS_BOUNDARY_CONDITION_FIXED, &
     & 0.0_CMISSDP,Err)
@@ -418,9 +448,35 @@ PROGRAM LINEARTETEXAMPLE
     & 0.0_CMISSDP,Err)
 
   CALL CMISSSolverEquations_BoundaryConditionsCreateFinish(SolverEquations,Err)
+  CALL CMISSDiagnosticsSetOn(CMISS_FROM_DIAG_TYPE,(/1,2,3,4,5/),"Diagnostics", &
+    & (/"PROBLEM_SOLVE"/),Err) !CMISS_ALL_DIAG_TYPE
 
   !Solve problem
   CALL CMISSProblem_Solve(Problem,Err)
+
+
+  !Copy dependent field coordinates into geometric field for visualisation of deformation.
+  CALL CMISSField_ParametersToFieldParametersComponentCopy(DependentField,CMISS_FIELD_U_VARIABLE_TYPE,CMISS_FIELD_VALUES_SET_TYPE, &
+    & 1,GeometricField,CMISS_FIELD_U_VARIABLE_TYPE,CMISS_FIELD_VALUES_SET_TYPE,1,Err)
+  CALL CMISSField_ParametersToFieldParametersComponentCopy(DependentField,CMISS_FIELD_U_VARIABLE_TYPE,CMISS_FIELD_VALUES_SET_TYPE, &
+    & 2,GeometricField,CMISS_FIELD_U_VARIABLE_TYPE,CMISS_FIELD_VALUES_SET_TYPE,2,Err)
+  CALL CMISSField_ParametersToFieldParametersComponentCopy(DependentField,CMISS_FIELD_U_VARIABLE_TYPE,CMISS_FIELD_VALUES_SET_TYPE, &
+    & 3,GeometricField,CMISS_FIELD_U_VARIABLE_TYPE,CMISS_FIELD_VALUES_SET_TYPE,3,Err)
+
+
+  IF(EXPORT_FIELD) THEN
+  !FieldML output
+  CALL CMISSFieldMLIO_Initialise( outputInfo, err )
+  CALL CMISSFieldML_OutputCreate( Mesh, outputDirectory, basename, dataFormat, outputInfo, err )
+  CALL CMISSFieldML_OutputAddImport( outputInfo, "coordinates.rc.3d", typeHandle, err )
+
+  CALL CMISSFieldML_OutputAddField( outputInfo, baseName//".geometric", dataFormat, GeometricField, &
+    & CMISS_FIELD_U_VARIABLE_TYPE, CMISS_FIELD_VALUES_SET_TYPE, err )
+  !CALL CMISSFieldML_OutputAddField( outputInfo, baseName//".dependent", dataFormat, DependentField, &
+  !  & CMISS_FIELD_U_VARIABLE_TYPE, CMISS_FIELD_VALUES_SET_TYPE, err )
+
+  CALL CMISSFieldML_OutputWrite( outputInfo, outputFilename, err )
+  CALL CMISSFieldMLIO_Finalise( outputInfo, err )
 
   !Output solution  
   CALL CMISSFields_Initialise(Fields,Err)
@@ -428,7 +484,7 @@ PROGRAM LINEARTETEXAMPLE
   CALL CMISSFields_NodesExport(Fields,"LinearTet","FORTRAN",Err)
   CALL CMISSFields_ElementsExport(Fields,"LinearTet","FORTRAN",Err)
   CALL CMISSFields_Finalise(Fields,Err)
-
+  ENDIF
   CALL CMISSFinalise(Err)
 
   WRITE(*,'(A)') "Program successfully completed."

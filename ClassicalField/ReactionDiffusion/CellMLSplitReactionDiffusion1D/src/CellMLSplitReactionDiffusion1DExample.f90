@@ -400,7 +400,7 @@ PROGRAM CELLMLSPLITREACTIONDIFFUSION1DEXAMPLE
   CALL CMISSControlLoop_Initialise(ControlLoop,Err)
   CALL CMISSProblem_ControlLoopGet(Problem,CMISS_CONTROL_LOOP_NODE,ControlLoop,Err)
   !Set the times
-  CALL CMISSControlLoop_TimesSet(ControlLoop,0.0_CMISSDP,0.5_CMISSDP,0.01_CMISSDP,Err)
+  CALL CMISSControlLoop_TimesSet(ControlLoop,0.0_CMISSDP,0.50_CMISSDP,0.01_CMISSDP,Err) 
   CALL CMISSControlLoop_OutputTypeSet(ControlLoop,CMISS_CONTROL_LOOP_PROGRESS_OUTPUT,Err)
   !Finish creating the problem control loop
   CALL CMISSProblem_ControlLoopCreateFinish(Problem,Err)

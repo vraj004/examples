@@ -710,7 +710,7 @@ CALL CMISSEquationsSet_CreateStart(EquationSetUserNumber,Region,FibreField,CMISS
   CALL CMISSSolverEquations_BoundaryConditionsCreateFinish(SolverEquations,Err)
 
   !Solve problem
-  CALL CMISSProblem_Solve(Problem,Err)
+  !CALL CMISSProblem_Solve(Problem,Err)
 
   !Output solution  
   CALL CMISSFields_Initialise(Fields,Err)
