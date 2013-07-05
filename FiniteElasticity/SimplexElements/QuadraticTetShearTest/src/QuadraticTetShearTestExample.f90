@@ -334,10 +334,10 @@ PROGRAM QUADRATIC_TET_SHEAR_EXAMPLE
     CALL CMISSField_ComponentMeshComponentSet(DisplacementField,CMISS_FIELD_DELUDELN_VARIABLE_TYPE,component_idx,1,Err)
   ENDDO
 
-  !Add hydrostatic pressure as element varying field component and match it to mesh component 1 as well.
+  !Add hydrostatic pressure as element varying field component and match it to mesh component 2 .
   CALL CMISSField_ComponentMeshComponentSet(DisplacementField,CMISS_FIELD_U_VARIABLE_TYPE,4,1,Err)
   CALL CMISSField_ComponentMeshComponentSet(DisplacementField,CMISS_FIELD_DELUDELN_VARIABLE_TYPE,4,1,Err)
-  !setting the 4th component of the displacement field to element based.
+  !setting the 4th component of the displacement field to nodally based.
   CALL CMISSField_ComponentInterpolationSet(DisplacementField,CMISS_FIELD_U_VARIABLE_TYPE,4, &
     & CMISS_FIELD_ELEMENT_BASED_INTERPOLATION, &
     & Err)
