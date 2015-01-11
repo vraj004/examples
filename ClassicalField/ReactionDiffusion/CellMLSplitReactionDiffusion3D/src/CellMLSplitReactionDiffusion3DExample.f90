@@ -345,8 +345,11 @@ PROGRAM CELLMLSPLITREACTIONDIFFUSION3DEXAMPLE
     & CMISS_FIELD_VALUES_SET_TYPE,1,0_CMISSIntg,Err)
   RYRNODES = (/46,53,60,81,88,95,116,123,130/)
   DO node=1,9
-    CALL CMISSField_ParameterSetUpdateNode(CellMLModelsField,CMISS_FIELD_U_VARIABLE_TYPE, &
-      & CMISS_FIELD_VALUES_SET_TYPE,1,1,RYRNODES(node),1,1_CMISSIntg,Err)
+    CALL CMISSDecomposition_NodeDomainGet(Decomposition,RYRNODES(node),1,NodeDomain,Err)
+    IF(NodeDomain==ComputationalNodeNumber) THEN
+      CALL CMISSField_ParameterSetUpdateNode(CellMLModelsField,CMISS_FIELD_U_VARIABLE_TYPE, &
+        & CMISS_FIELD_VALUES_SET_TYPE,1,1,RYRNODES(node),1,1_CMISSIntg,Err)
+    ENDIF
   ENDDO
     
 
