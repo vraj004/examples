@@ -1,9 +1,6 @@
 {"example": {
   "test": [   
-    {
-      "id": 1,
-      "tolerance": 1e-6,
-      "expectedPath": "expected_results/"
-     }]
+    {"id": 1,
+     "expectedPath": "expected_results",
+     "tolerance": 1e-6}]
 }}
-

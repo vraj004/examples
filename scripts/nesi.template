@@ -1,0 +1,19 @@
+#!/bin/bash
+#SBATCH -J MPI_JOB
+#SBATCH -A uoa00230         # Project Account
+#SBATCH --time=01:00:00     # Walltime
+#SBATCH --ntasks={{test.processors}}          # number of tasks
+#SBATCH --mem-per-cpu=1024  # memory/cpu (in MB)
+#SBATCH -o nesi.%j.out
+#SBATCH -e nesi.%j.out
+#SBATCH --workdir={{test.path}}
+
+ulimit -m 1048576 -v 1048576
+
+module load intel/ics-2013.SP1
+module load zlib/1.2.8-ictce-5.4.0
+module load HDF5/1.8.9-ictce-5.4.0
+module load PETSc/3.4.2-ictce-5.4.0-Python-2.7.3
+
+
+srun /projects/uoa00230/OpenCMISS/examples/ClassicalField/Laplace/Laplace/Fortran/bin/x86_64-linux/intel/intel/FortranExample {{test.args}}
